@@ -1,5 +1,5 @@
 import sqlalchemy as sq
-from  sqlalchemy import UniqueConstraint
+from sqlalchemy import UniqueConstraint
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship
 from sqlalchemy_utils import database_exists, create_database,drop_database
@@ -11,7 +11,7 @@ class User(Base):
 
     id = sq.Column(sq.Integer, primary_key=True)
     name = sq.Column(sq.String, nullable=False)
-    url_profile = sq.Column(sq.String, nullable=False)
+    # url_profile = sq.Column(sq.String, nullable=False)
 
 class Photo(Base):
     __tablename__ = 'photo'
@@ -38,21 +38,23 @@ class VkinderDB:
         self.name = name
         self.engine = sq.create_engine(f'postgresql://{self.login}:{password}@localhost/{name}')
 
-    def _create_database(self):
+    def create_database(self):
         if not database_exists(self.engine.url):
             create_database(self.engine.url)
+
+    def create_database_tables(self):
             self.Session = sessionmaker(bind=self.engine)
             self.session = self.Session()
             Base.metadata.create_all(self.engine)
-            print('база создана')
 
     def _drop_database(self):
         if database_exists(self.engine.url):
             drop_database(self.engine.url)
             print('таблица удалена')
 
-
-# if __name__ == '__main__':
-#     a = VkinderDB('postgres', 'pgXdiVog3K', 'vkinder')
-#     a._drop_database()
-#     a._create_database()
+    def add_users(self, users):
+        self.users = []
+        for user in self.users:
+            self.user_list.append(User(users['id'], users['name']))
+            self.session.add_all(self.users)
+            self.session.commit()

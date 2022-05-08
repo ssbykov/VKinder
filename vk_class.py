@@ -27,12 +27,12 @@ class VKclass:
             'random_id': randrange(10 ** 7),
         }
         if photo_post:
-            media_id = self.get_user_photos(owner_id)
-            params['attachment'] = f'photo{owner_id}_{media_id}'
+            photo_list = self.get_user_photos(owner_id)
+            params['attachment'] = ''
+            if photo_list:
+                for photo in photo_list:
+                    params['attachment'] += f"photo{photo['user_id']}_{photo['id']},"
         self.vk.method('messages.send', params)
-
-    def _print_cand(self, user_id, message):
-        self.vk.method('messages.send', {'user_id': user_id,'message': message, 'random_id': randrange(10 ** 7),})
 
     def _keyboard(self, message_id):
         keyboard_dict = {
@@ -53,10 +53,13 @@ class VKclass:
         # self.vk.method('messages.send', {'user_id': user_id, 'keyboard': keyboard.get_keyboard(),'message': message, 'random_id': randrange(10 ** 7),})
 
     def get_user_photos(self, user_id):
+        photo_list = []
         params = {'owner_id': user_id, 'album_id': 'profile', 'extended': 1}
         user_photos = self.vk_user.method('photos.get', params)
         if len(user_photos['items']):
-            return user_photos['items'][0]['id']
+            photo_list = [{'id': photo['id'], 'url_photo': photo['sizes'][-1]['url'], 'user_id': photo['owner_id'], 'likes': photo['likes']['count']} for photo in user_photos['items']]
+            photo_list = sorted(photo_list, key=lambda p: p['likes'], reverse=True)[:3]
+            return photo_list
 
     def user_information(self, user_id):
         params = {'user_ids': user_id, 'fields': 'bdate,sex,city'}
@@ -69,7 +72,8 @@ class VKclass:
         else:
             sex = 0
         city_person = user_inf[0]['city']['id']
-        return self.pair_search(age, sex, city_person)
+        return {'name': f"{user_inf[0]['first_name']} {user_inf[0]['last_name']}",
+                'age': age, 'sex': sex, 'city_person': city_person}
 
     def pair_search(self, age, sex, city_person):
         candidates = self.vk_user.method('users.search',

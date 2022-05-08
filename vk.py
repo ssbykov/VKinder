@@ -80,7 +80,7 @@ def reter(func):
                 request = event.text
 
                 if request.lower() == 'да':
-                    write_msg(event.user_id, f"{man[0]},{man[1]} {man[2]}")
+                    write_msg(event.user_id, f"{man[0]}, {man[1]} {man[2]}")
                 else:
                     write_msg(event.user_id, f"Напишите 'Да'")
 

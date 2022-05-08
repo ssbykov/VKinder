@@ -11,7 +11,7 @@ token_person = token_vk_person
 vk_person = vk_api.VkApi(token=token_person)
 
 def user_information():
-    info = vk_person.method("status.get", {'user_id': 705786865})
+    info = vk_person.method("status.get", {'user_id': 87343268})
     print(info)
 
 user_information()

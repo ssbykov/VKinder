@@ -3,6 +3,7 @@ from sqlalchemy import UniqueConstraint
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship
 from sqlalchemy_utils import database_exists, create_database,drop_database
+from sqlalchemy.dialects.postgresql import insert
 
 Base = declarative_base()
 
@@ -50,11 +51,14 @@ class VkinderDB:
     def _drop_database(self):
         if database_exists(self.engine.url):
             drop_database(self.engine.url)
-            print('таблица удалена')
 
-    def add_users(self, users):
-        self.users = []
-        for user in self.users:
-            self.user_list.append(User(users['id'], users['name']))
-            self.session.add_all(self.users)
-            self.session.commit()
+    def add_data(self, table_name, data_list):
+        table_name_dict = {
+            'User': User,
+            'Photo': Photo,
+            'User_viewer': UserView
+        }
+        self.session.execute(insert(table_name_dict[table_name])
+                        .values(data_list)
+                        .on_conflict_do_nothing())
+        self.session.commit()

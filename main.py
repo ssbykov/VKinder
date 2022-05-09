@@ -1,5 +1,4 @@
 import sys
-
 from vk_class import VKclass
 from sql_class import VkinderDB
 
@@ -25,17 +24,33 @@ if __name__ == '__main__':
         elif message_id == 1:
             if new_message['text'] == 'Канэчно хачу!':
                 user_information_dict = vk.user_information(user_id)
-                db_vkinder.add_users([{'id': user_id, 'name': user_information_dict['name']}])
+                db_vkinder.add_data('User', [{'id': user_id, 'name': user_information_dict['name']}])
                 candidates = iter(vk.pair_search(
                     user_information_dict['age'],
                     user_information_dict['sex'],
                     user_information_dict['city_person'])
                 )
-                candidate = candidates.__next__()
-            elif new_message['text'] == 'Дальше!':
-                candidate = candidates.__next__()
+                reaction = 0
+            elif new_message['text'] == 'Маловато!':
+                reaction = 1
+            elif new_message['text'] == 'Вах!':
+                reaction = 2
+            elif new_message['text'] == 'Ну...':
+                reaction = 3
             else:
                 sys.exit()
-            cand_str = f"https://vk.com/id{candidate['id']}, {candidate['first_name']}, {candidate['last_name']}"
-            vk.answer(user_id, message_id, cand_str, True, candidate['id'])
+            if reaction:
+                db_vkinder.add_data('User', [{'id': candidate['id'], 'name': candidate_name}])
+                db_vkinder.add_data('Photo', photo_list)
+                db_vkinder.add_data('User_viewer', [{'reaction': reaction, 'viewer_id': user_id, 'viewed_id': candidate['id']}])
+            photo_list = []
+            while not photo_list:
+                candidate = candidates.__next__()
+                candidate_name = f"{candidate['first_name']} {candidate['last_name']}"
+                cand_str = f"https://vk.com/id{candidate['id']}, {candidate_name}"
+                photo_list = vk.get_user_photos(candidate['id'])
+                if photo_list:
+                    vk.answer(user_id, message_id, cand_str, True, photo_list)
+
+
 

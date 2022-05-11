@@ -12,7 +12,6 @@ class User(Base):
 
     id = sq.Column(sq.Integer, primary_key=True)
     name = sq.Column(sq.String, nullable=False)
-    # url_profile = sq.Column(sq.String, nullable=False)
 
 class Photo(Base):
     __tablename__ = 'photo'
@@ -62,3 +61,13 @@ class VkinderDB:
                         .values(data_list)
                         .on_conflict_do_nothing())
         self.session.commit()
+
+    def check_user_list(self, user_id):
+        query_user_list = self.session.query(UserView.viewed_id).filter(UserView.viewer_id == user_id)
+        user_list = [ul[0] for ul in query_user_list]
+        return user_list
+
+    def check_user(self, user_id):
+        query_user = self.session.query(UserView.viewer_id).filter(UserView.viewer_id == user_id).distinct()
+        user = query_user[0][0]
+        return user

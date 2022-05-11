@@ -18,35 +18,25 @@ class VKclass:
             if event.type == VkEventType.MESSAGE_NEW  and event.to_me:
                 return {'user_id':event.user_id, 'text':event.text}
 
-    def answer(self, user_id: int, message_id: int, message: str, keyboard: bool, photo_post: bool, photo_list = []):
+    def answer(self, user_id: int, message: str, keyboard = [], photo_list = []):
         params = {
             'user_id': user_id,
             'message': message,
             'random_id': 0
         }
         if keyboard:
-            keyboard = self._keyboard(message_id)
+            keyboard = self._keyboard(keyboard)
             params['keyboard'] = keyboard.get_keyboard()
-        if photo_post and photo_list:
+        if photo_list:
             params['attachment'] = ''
             if photo_list:
                 for photo in photo_list:
                     params['attachment'] += f"photo{photo['user_id']}_{photo['id']},"
         self.vk.method('messages.send', params)
 
-    def _keyboard(self, message_id: int):
-        keyboard_dict = {
-            0: [{'text': 'Канэчно хачу!', 'color': VkKeyboardColor.NEGATIVE},
-                {'text': 'Да чота лень!', 'color': VkKeyboardColor.SECONDARY}],
-            1: [{'text': 'Маловато!', 'color': VkKeyboardColor.SECONDARY},
-                {'text': 'Вах!', 'color': VkKeyboardColor.NEGATIVE},
-                {'text': 'Ну...', 'color': VkKeyboardColor.PRIMARY}],
-            3: [{'text': 'Хачу Вах!', 'color': VkKeyboardColor.NEGATIVE},
-                {'text': 'Продолжить просмотр!', 'color': VkKeyboardColor.SECONDARY}]
-        }
-
+    def _keyboard(self, keyboard_list: list):
         keyboard = VkKeyboard(one_time=True)
-        for button in keyboard_dict[message_id]:
+        for button in keyboard_list:
             keyboard.add_button(button['text'], button['color'])
         return keyboard
 

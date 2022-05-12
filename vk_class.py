@@ -75,7 +75,7 @@ class VKclass:
 
     def pair_search(self, params: dict, offset = '0'):
         candidates = []
-        for birth_year in range(params['birth_year'] + 4, params['birth_year'] + 11):
+        for birth_year in range(params['birth_year'] - 4, params['birth_year'] + 4):
             add_candidates = self.vk_user.method('users.search',{
                 'offset': offset,
                 'count': '1000',
@@ -84,8 +84,8 @@ class VKclass:
                 'sex': params['sex'],
                 'status': '1',
                 'birth_year': birth_year,
-                'age_from': params['age'] - 10,
-                'age_to': params['age'] - 5,
+                'age_from': params['age'] - 3,
+                'age_to': params['age'] + 3,
                 'has_photo': 1
             })
             add_candidates = list(filter(lambda x: x['is_closed'] == False, add_candidates['items']))

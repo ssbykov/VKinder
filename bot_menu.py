@@ -14,7 +14,7 @@ def node_01(kwargs={}):
 
 
 def node_02(kwargs={}):
-    if kwargs['new_message'] == menu_dict['01']['keyboard'][0]['text']:#'Канэчно хачу!':
+    if kwargs['new_message'] == menu_dict['01']['keyboard'][0]['text']:
         user_information_dict = kwargs['vk'].user_information(kwargs['user_id'])
         check_list = kwargs['db_vkinder'].check_user_list(kwargs['user_id'])
         kwargs['db_vkinder'].add_data('User', [{'id': kwargs['user_id'], 'name': user_information_dict['name']}])
@@ -25,11 +25,18 @@ def node_02(kwargs={}):
         else:
             candidates = iter(candidates)
         return {'menu_namber': '021', 'candidates': candidates, 'photo_list': []}
-    else:
-        return '022'
+    elif kwargs['new_message'] == menu_dict['01']['keyboard'][1]['text']:
+        return {'menu_namber': '0', 'photo_list': []}
 
 
 def node_021(kwargs={}):
+    if kwargs['new_message'] == menu_dict['021']['keyboard'][0]['text']:
+        return next_candidate(kwargs['candidates'], kwargs['vk'])
+    elif kwargs['new_message'] == menu_dict['021']['keyboard'][1]['text']:
+        return {'menu_namber': '0', 'photo_list': []}
+
+
+def node_022(kwargs={}):
     return next_candidate(kwargs['candidates'], kwargs['vk'])
 
 
@@ -40,6 +47,8 @@ def node_0221(kwargs={}):
         reaction = 2
     elif kwargs['new_message'] == menu_dict['0221']['keyboard'][2]['text']:
         reaction = 3
+    elif kwargs['new_message'] == menu_dict['0221']['keyboard'][3]['text']:
+        return {'menu_namber': '0', 'photo_list': []}
     else:
         sys.exit()
     if reaction:
@@ -70,21 +79,23 @@ def next_candidate(candidates, vk):
 
 menu_dict = {
     '0': {'func': node_0,
-          'message': 'Привет, Красавчег!',
+          'message': 'Пока, Красавчег!',
           'keyboard': []},
     '01': {'func': node_01,
-           'message': 'Хочешь найдем тебе пару? \n Выбери вариант.',
+           'message': 'Привет, Красавчег!\nХочешь найдем тебе пару? \n Выбери вариант.',
            'keyboard': [{'text': 'Канэчно хачу!', 'color': VkKeyboardColor.NEGATIVE},
                         {'text': 'Да чота лень!', 'color': VkKeyboardColor.SECONDARY}]},
     '02': {'func': node_02,
-           'message': 'Рад снова видеть тебя!. Продолжим?\n Выбери вариант.',
-           'keyboard': [{'text': 'Канэчно хачу!', 'color': VkKeyboardColor.NEGATIVE},
-                        {'text': 'Да чота лень!', 'color': VkKeyboardColor.SECONDARY}]},
+           'message': 'Привет, Красавчег!\nРад снова видеть тебя!. Продолжим?\n Выбери вариант.',
+           'keyboard': [{'text': 'Канэчно хачу!', 'color': VkKeyboardColor.POSITIVE},
+                        {'text': 'Да чота лень!', 'color': VkKeyboardColor.NEGATIVE}]},
     '021': {'func': node_021,
             'message': 'Ты готов?!',
-            'keyboard': [{'text': 'ДААА!', 'color': VkKeyboardColor.NEGATIVE}]},
+            'keyboard': [{'text': 'ДААА!', 'color': VkKeyboardColor.POSITIVE},
+                         {'text': 'Не, передумал.', 'color': VkKeyboardColor.NEGATIVE}]},
     '0221': {'func': node_0221,
-             'keyboard': [{'text': 'Маловато!', 'color': VkKeyboardColor.SECONDARY},
-                          {'text': 'Вах!', 'color': VkKeyboardColor.NEGATIVE},
-                          {'text': 'Ну...', 'color': VkKeyboardColor.PRIMARY}]}
+             'keyboard': [{'text': 'Ну не знаю...!', 'color': VkKeyboardColor.SECONDARY},
+                          {'text': 'Вах!', 'color': VkKeyboardColor.POSITIVE},
+                          {'text': 'Ну нет!', 'color': VkKeyboardColor.NEGATIVE},
+                          {'text': 'Достаточно.', 'color': VkKeyboardColor.PRIMARY}]}
 }

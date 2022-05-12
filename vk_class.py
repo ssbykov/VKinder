@@ -35,7 +35,7 @@ class VKclass:
         self.vk.method('messages.send', params)
 
     def _keyboard(self, keyboard_list: list):
-        keyboard = VkKeyboard(one_time=True)
+        keyboard = VkKeyboard(inline=True)
         for button in keyboard_list:
             keyboard.add_button(button['text'], button['color'])
         return keyboard

@@ -4,6 +4,7 @@ from datetime import date
 from vk_api.longpoll import VkLongPoll, VkEventType
 from vk_api.keyboard import VkKeyboard, VkKeyboardColor
 
+
 class VKclass:
 
     def __init__(self, token, token_group):
@@ -15,18 +16,25 @@ class VKclass:
 
     def new_message(self):
         for event in self.longpoll.listen():
-            if event.type == VkEventType.MESSAGE_NEW  and event.to_me:
-                return {'user_id':event.user_id, 'text':event.text}
+            if event.type == VkEventType.MESSAGE_NEW and event.to_me:
+                return {'user_id': event.user_id, 'text': event.text}
 
-    def answer(self, user_id: int, message: str, keyboard = [], photo_list = []):
+    def send_message(self, params):
+        self.vk.method('messages.send', params)
+
+    def answer(self, user_id: int, message: str, keyboard=[], photo_list=[]):
         params = {
             'user_id': user_id,
             'message': message,
             'random_id': 0
         }
         if keyboard:
-            keyboard = self._keyboard(keyboard)
+            keyboard = self._keyboard(keyboard, len(photo_list))
             params['keyboard'] = keyboard.get_keyboard()
+        # else:
+        #  {"buttons":[],"one_time":true}
+        # keyboard = VkKeyboard(one_time=True, inline=False)
+        # params['keyboard'] = keyboard.get_keyboard()
         if photo_list:
             params['attachment'] = ''
             if photo_list:
@@ -34,10 +42,16 @@ class VKclass:
                     params['attachment'] += f"photo{photo['user_id']}_{photo['id']},"
         self.vk.method('messages.send', params)
 
-    def _keyboard(self, keyboard_list: list):
+    def _keyboard(self, keyboard_list: list, callback_button_count):
         keyboard = VkKeyboard(inline=True)
         for button in keyboard_list:
-            keyboard.add_button(button['text'], button['color'])
+            if button['text']:
+                keyboard.add_button(button['text'], button['color'])
+        if callback_button_count:
+            keyboard.add_line()
+            for bn in range(callback_button_count):
+                keyboard.add_callback_button(f'Фото {bn + 1}', VkKeyboardColor.SECONDARY)
+            keyboard.add_callback_button('Список "Вах!"', VkKeyboardColor.POSITIVE)
         return keyboard
 
     def get_user_photos(self, user_id: int):
@@ -73,10 +87,10 @@ class VKclass:
             'city_person': city_person
         }
 
-    def pair_search(self, params: dict, offset = '0'):
+    def pair_search(self, params: dict, offset='0'):
         candidates = []
-        for birth_year in range(params['birth_year'] - 4, params['birth_year'] + 4):
-            add_candidates = self.vk_user.method('users.search',{
+        for birth_year in range(params['birth_year'] + 4, params['birth_year'] - 4, -1):
+            add_candidates = self.vk_user.method('users.search', {
                 'offset': offset,
                 'count': '1000',
                 'fields': ['photo', 'has_photo'],

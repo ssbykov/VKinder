@@ -51,23 +51,32 @@ class VkinderDB:
         if database_exists(self.engine.url):
             drop_database(self.engine.url)
 
-    def add_data(self, table_name, data_list):
-        table_name_dict = {
-            'User': User,
-            'Photo': Photo,
-            'User_viewer': UserView
-        }
-        self.session.execute(insert(table_name_dict[table_name])
-                        .values(data_list)
-                        .on_conflict_do_nothing())
+    def add_user(self, data_dict):
+        self.session.execute(insert(User)
+                             .values(data_dict)
+                             .on_conflict_do_update(constraint='user_pkey', set_=data_dict))
+        self.session.commit()
+
+    def add_user_photos(self, data_list):
+        for data_dict in data_list:
+            self.session.execute(insert(Photo)
+                                 .values(data_dict)
+                                 .on_conflict_do_update(constraint='photo_pkey', set_=data_dict))
+        self.session.commit()
+
+    def add_user_viewer(self, data_dict):
+        self.session.execute(insert(UserView)
+                             .values(data_dict)
+                             .on_conflict_do_update(constraint='user_view_viewer_id_viewed_id_key', set_=data_dict))
         self.session.commit()
 
     def check_user_list(self, user_id):
-        query_user_list = self.session.query(UserView.viewed_id).filter(UserView.viewer_id == user_id)
+        query_user_list = self.session.query(UserView.viewed_id).filter(UserView.viewer_id == user_id, UserView.reaction != 1)
         user_list = [ul[0] for ul in query_user_list]
         return user_list
 
     def check_user(self, user_id):
-        query_user = self.session.query(UserView.viewer_id).filter(UserView.viewer_id == user_id).distinct()
-        user = query_user[0][0]
-        return user
+        query_user = list(self.session.query(UserView.viewer_id).filter(UserView.viewer_id == user_id).distinct())
+        if query_user:
+            query_user = query_user[0][0]
+        return query_user

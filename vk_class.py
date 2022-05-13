@@ -17,7 +17,6 @@ class VKclass:
 
     def new_message(self):
         for event in self.longpoll.listen():
-            print(event)
             if event.type == VkBotEventType.MESSAGE_NEW and event.obj.message['text'] != '':
                 return {
                     'user_id': event.message['from_id'],

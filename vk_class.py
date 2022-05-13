@@ -2,6 +2,7 @@ import vk_api
 import time
 from datetime import date
 from vk_api.longpoll import VkLongPoll, VkEventType
+from vk_api.bot_longpoll import VkBotLongPoll, VkBotEventType
 from vk_api.keyboard import VkKeyboard, VkKeyboardColor
 
 
@@ -12,15 +13,30 @@ class VKclass:
         self.token_group = token_group
         self.vk = vk_api.VkApi(token=self.token_group)
         self.vk_user = vk_api.VkApi(token=self.token)
-        self.longpoll = VkLongPoll(self.vk)
+        self.longpoll = VkBotLongPoll(self.vk, group_id=213108918)
 
     def new_message(self):
         for event in self.longpoll.listen():
-            if event.type == VkEventType.MESSAGE_NEW and event.to_me:
-                return {'user_id': event.user_id, 'text': event.text}
-
+            print(event)
+            if event.type == VkBotEventType.MESSAGE_NEW and event.obj.message['text'] != '':
+                return {
+                    'user_id': event.message['from_id'],
+                    'peer_id': event.message['peer_id'],
+                    'cmids': event.message['conversation_message_id'],
+                    'text': event.message['text']
+                }
+            # elif event.type == VkBotEventType.MESSAGE_EVENT:
+            #     if event.object.payload.get('type') == 'my_own_100500_type_edit':
+            #
+            #         last_id = self.vk.messages.edit(
+            #         peer_id=event.obj.peer_id,
+            #         # message='ola',
+            #         conversation_message_id=event.obj.conversation_message_id)
     def send_message(self, params):
         self.vk.method('messages.send', params)
+
+    def del_message(self, params):
+        self.vk.method('messages.delete', params)
 
     def answer(self, user_id: int, message: str, keyboard=[], photo_list=[]):
         params = {

@@ -14,7 +14,14 @@ def init_candidates(kwargs):
         candidates = iter(list(filter(lambda x: x['id'] not in check_list, candidates)))
     else:
         candidates = iter(candidates)
-    return {'menu_namber': '021', 'candidates': candidates, 'photo_list': []}
+    return {'menu_namber': '31', 'candidates': candidates, 'photo_list': []}
+
+def init_like_list(kwargs):
+    user_id = kwargs['new_message']['user_id']
+    like_list = kwargs['db_vkinder'].select_like_list(user_id)
+    like_candidates = kwargs['vk'].get_like_list(like_list)
+    like_candidates = iter(like_candidates)
+    return {'menu_namber': '0222', 'like_candidates': like_candidates, 'photo_list': []}
 
 
 # формирование данных по кандидату для отправки в чат
@@ -28,12 +35,12 @@ def next_candidate(vk, db_vkinder, candidates, user_id):
             pass
         photo_list = vk.get_user_photos(candidate['id'])
         if photo_list:
-            menu_dict['0221']['message'] = (
+            menu_dict['41']['message'] = (
                 f"https://vk.com/id{candidate['id']}, "
                 f"{candidate['first_name']} {candidate['last_name']}"
             )
             add_new_user_base(db_vkinder, candidate, photo_list, user_id)
-            return {'menu_namber': '0221', 'candidate': candidate, 'photo_list': photo_list}
+            return {'menu_namber': '41', 'candidate': candidate, 'photo_list': photo_list}
 
 #добавление данных по пользователю в базу
 def add_new_user_base(db_vkinder, candidate, photo_list, user_id):
@@ -47,40 +54,40 @@ def add_new_user_base(db_vkinder, candidate, photo_list, user_id):
         'viewed_id': candidate['id']})
 
 #обработка первого сообщения (уроверь 1) при входе пользователя в чат (проверка наличия данных по пользователю в базе)
-def node_0(kwargs: dict):
+def node_1(kwargs: dict):
     if kwargs['db_vkinder'].check_user(kwargs['new_message']['user_id']):
-        return {'menu_namber': '02', 'photo_list': []}
+        return {'menu_namber': '22', 'photo_list': []}
     else:
-        return {'menu_namber': '01', 'photo_list': []}
+        return {'menu_namber': '21', 'photo_list': []}
 
 #обработка действия (уровень 2) пользователь первый раз
-def node_01(kwargs: dict):
-    if kwargs['new_message']['text'] == menu_dict['01']['keyboard'][0]['text']:
+def node_21(kwargs: dict):
+    if kwargs['new_message']['text'] == menu_dict['21']['keyboard'][0]['text']:
         return init_candidates(kwargs)
-    elif kwargs['new_message']['text'] == menu_dict['01']['keyboard'][1]['text']:
-        return {'menu_namber': '0', 'photo_list': []}
+    elif kwargs['new_message']['text'] == menu_dict['21']['keyboard'][1]['text']:
+        return {'menu_namber': '1', 'photo_list': []}
 
 #обработка действия (уровень 2) пользователь уже был
-def node_02(kwargs: dict):
-    if kwargs['new_message']['text'] == menu_dict['01']['keyboard'][0]['text']:
+def node_22(kwargs: dict):
+    if kwargs['new_message']['text'] == menu_dict['21']['keyboard'][0]['text']:
         return init_candidates(kwargs)
-    elif kwargs['new_message']['text'] == menu_dict['01']['keyboard'][1]['text']:
-        return {'menu_namber': '0', 'photo_list': []}
+    elif kwargs['new_message']['text'] == menu_dict['21']['keyboard'][1]['text']:
+        return {'menu_namber': '1', 'photo_list': []}
 
 #обработка действия (уроверь 3) запуск показа анкет
-def node_021(kwargs: dict):
-    if kwargs['new_message']['text'] == menu_dict['021']['keyboard'][0]['text']:
+def node_31(kwargs: dict):
+    if kwargs['new_message']['text'] == menu_dict['31']['keyboard'][0]['text']:
         return next_candidate(
             kwargs['vk'], kwargs['db_vkinder'],
             kwargs['candidates'],
             kwargs['new_message']['user_id']
         )
-    elif kwargs['new_message']['text'] == menu_dict['021']['keyboard'][1]['text']:
-        return {'menu_namber': '0', 'photo_list': []}
+    elif kwargs['new_message']['text'] == menu_dict['31']['keyboard'][1]['text']:
+        return {'menu_namber': '1', 'photo_list': []}
 
 #уроверь работы с сообщением с анкетой кандидата (уровень 4)
-def node_0221(kwargs: dict):
-    for kb in menu_dict['0221']['keyboard']:
+def node_41(kwargs: dict):
+    for kb in menu_dict['41']['keyboard']:
         if kwargs['new_message']['text'] == kb['text']:
             reaction = kb['reaction']
             break
@@ -96,28 +103,44 @@ def node_0221(kwargs: dict):
             kwargs['new_message']['user_id']
         )
     else:
-        return {'menu_namber': '0', 'photo_list': []}
+        return {'menu_namber': '1', 'photo_list': []}
+
+#уроверь работы с сообщением с анкетой избранного кандидата (уровень 4)
+def node_0222(kwargs: dict):
+    if menu_dict['41']['keyboard']['reaction']:
+        return next_candidate(
+            kwargs['vk'],
+            kwargs['db_vkinder'],
+            kwargs['like_candidates'],
+            kwargs['new_message']['user_id']
+        )
+    else:
+        return {'menu_namber': '1', 'photo_list': []}
 
 menu_dict = {
-    '0': {'func': node_0,
+    '1': {'func': node_1,
           'message': 'Пока, Красавчег!',
           'keyboard': []},
-    '01': {'func': node_01,
+    '21': {'func': node_21,
            'message': 'Привет, Красавчег!\nХочешь найдем тебе пару? \n Выбери вариант.',
            'keyboard': [{'text': 'Канэчно хачу!', 'color': VkKeyboardColor.NEGATIVE},
                         {'text': 'Да чота лень!', 'color': VkKeyboardColor.SECONDARY}]},
-    '02': {'func': node_02,
+    '22': {'func': node_22,
            'message': 'Привет, Красавчег!\nРад снова видеть тебя!. Продолжим?\n Выбери вариант.',
            'keyboard': [{'text': 'Канэчно хачу!', 'color': VkKeyboardColor.POSITIVE},
                         {'text': 'Да чота лень!', 'color': VkKeyboardColor.NEGATIVE}]},
-    '021': {'func': node_021,
+    '31': {'func': node_31,
             'message': 'Ты готов?!',
             'keyboard': [{'text': 'ДААА!', 'color': VkKeyboardColor.POSITIVE},
                          {'text': 'Не, передумал.', 'color': VkKeyboardColor.NEGATIVE}]},
-    '0221': {'func': node_0221,
+    '41': {'func': node_41,
              'keyboard': [{'text': 'Ну не знаю...', 'color': VkKeyboardColor.PRIMARY, 'reaction': 1},
                           {'text': 'Вах!', 'color': VkKeyboardColor.POSITIVE, 'reaction': 2},
                           {'text': 'Ну нет!', 'color': VkKeyboardColor.NEGATIVE, 'reaction': 3},
+                          {'text': 'Достаточно.', 'color': VkKeyboardColor.PRIMARY, 'reaction': 0},
+                          {'text': ''}]},
+    '0222': {'func': node_0222,
+             'keyboard': [{'text': 'Дальше', 'color': VkKeyboardColor.PRIMARY, 'reaction': 1},
                           {'text': 'Достаточно.', 'color': VkKeyboardColor.PRIMARY, 'reaction': 0},
                           {'text': ''}]}
 }

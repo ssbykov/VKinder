@@ -3,7 +3,6 @@ import time
 from datetime import date
 from vk_api.bot_longpoll import VkBotLongPoll, VkBotEventType
 from vk_api.keyboard import VkKeyboard, VkKeyboardColor
-import requests
 
 
 class VKclass:
@@ -21,7 +20,6 @@ class VKclass:
             if event.type == VkBotEventType.MESSAGE_NEW and event.obj.message['text'] != '':
                 return {
                     'user_id': event.message['from_id'],
-                    # 'peer_id': event.message['peer_id'],
                     'cmids': event.message['conversation_message_id'],
                     'text': event.message['text'],
                     'type': 'MESSAGE_NEW'
@@ -103,7 +101,7 @@ class VKclass:
                         VkKeyboardColor.SECONDARY,
                         payload={"type": {'like': str(photo_list[bn]['id'])}}
                     )
-            keyboard.add_callback_button('Список "Вах!"', VkKeyboardColor.POSITIVE, payload={"type": 0})
+            keyboard.add_callback_button('Список "Вах!"', VkKeyboardColor.POSITIVE, payload={"type": 'like'})
         return keyboard
 
     #метод запроса фотографий по кандидату из соцсети
@@ -171,3 +169,8 @@ class VKclass:
         else:
             self.vk_user.method('likes.delete', params)
         return self.get_user_photos(owner_id)
+
+
+    def get_like_list(self, like_list):
+        check_like = self.vk_user.method('users.get', like_list)
+        return list(check_like)

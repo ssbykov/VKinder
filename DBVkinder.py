@@ -19,7 +19,6 @@ class Photo(Base):
     __tablename__ = 'photo'
 
     id = sq.Column(sq.Integer, primary_key=True)
-    url_photo = sq.Column(sq.String, nullable=False)
     likes = sq.Column(sq.Integer)
     like = sq.Column(sq.Boolean)
     user_id = sq.Column(sq.Integer, sq.ForeignKey('user.id', ondelete='CASCADE'))
@@ -69,8 +68,6 @@ class VkinderDB:
     # добавление фотографий в базу
     def add_user_photos(self, photo_list):
         for photo in photo_list:
-            if self.session.query(Photo.like).filter(Photo.id == int(photo['id'])).first():
-                photo['like'] = list(self.session.query(Photo.like).filter(Photo.id == int(photo['id'])).first())[0]
             self.session.execute(insert(Photo).values(photo).on_conflict_do_nothing())
         self.session.commit()
 
@@ -98,23 +95,10 @@ class VkinderDB:
         query_user = list(self.session.query(UserView.viewer_id).filter(UserView.viewer_id == user_id).distinct())
         return query_user
 
-    # запрос фото пользователя
-    def get_user_photos(self, user_id):
-        query_user = list(self.session.query(Photo.id).filter(Photo.user_id == user_id).order_by(Photo.likes.desc()))
-        attachment = ''
-        for photo in query_user:
-            attachment += f"photo{user_id}_{photo['id']},"
-        return attachment
-
-    # простановка/удаление лайка фото
-    def like_user_photo(self, user_id, photo_like):
-        photo_id = list(self.session.query(Photo.id).filter(
-            Photo.user_id == user_id).order_by(Photo.likes.desc()))[int(photo_like)-1][0]
-        photo = self.session.query(Photo).get(photo_id)
-        if photo.like:
-            photo.like = False
-        else:
-            photo.like = True
-        self.session.commit()
-        return photo_id
-
+    # # запрос фото пользователя
+    # def get_user_photos(self, user_id):
+    #     query_user = list(self.session.query(Photo.id).filter(Photo.user_id == user_id).order_by(Photo.likes.desc()))
+    #     attachment = ''
+    #     for photo in query_user:
+    #         attachment += f"photo{user_id}_{photo['id']},"
+    #     return attachment

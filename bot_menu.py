@@ -2,13 +2,13 @@ import sys
 from vk_api.keyboard import VkKeyboard, VkKeyboardColor
 
 
-# функция формирования первоначального полного списка кандидатов с учетом уже просмотренных
+# формирование первоначального полного списка кандидатов с учетом уже просмотренных
 def init_candidates(kwargs):
     user_id = kwargs['new_message']['user_id']
     user_information_dict = kwargs['vk'].user_information(user_id)
     check_list = kwargs['db_vkinder'].check_user_list(user_id)
     kwargs['db_vkinder'].add_user({'id': user_id, 'name': user_information_dict['name']})
-    kwargs['vk'].answer(user_id, 'Подожди пока подберу для тебя кандидатов ;)')
+    kwargs['vk'].answer(user_id, 'Подожди пока подберу для тебе кандидатов ;)')
     candidates = kwargs['vk'].pair_search(user_information_dict)
     if check_list:
         candidates = iter(list(filter(lambda x: x['id'] not in check_list, candidates)))
@@ -17,7 +17,7 @@ def init_candidates(kwargs):
     return {'menu_namber': '021', 'candidates': candidates, 'photo_list': []}
 
 
-# функция формирования данных по кандидату для отправки в чат
+# формирование данных по кандидату для отправки в чат
 def next_candidate(vk, db_vkinder, candidates, user_id):
     photo_list = []
     while not photo_list:
@@ -35,6 +35,7 @@ def next_candidate(vk, db_vkinder, candidates, user_id):
             add_new_user_base(db_vkinder, candidate, photo_list, user_id)
             return {'menu_namber': '0221', 'candidate': candidate, 'photo_list': photo_list}
 
+#добавление данных по пользователю в базу
 def add_new_user_base(db_vkinder, candidate, photo_list, user_id):
     db_vkinder.add_user({
         'id': candidate['id'],
@@ -69,11 +70,15 @@ def node_02(kwargs: dict):
 #обработка действия (уроверь 3) запуск показа анкет
 def node_021(kwargs: dict):
     if kwargs['new_message']['text'] == menu_dict['021']['keyboard'][0]['text']:
-        return next_candidate(kwargs['vk'], kwargs['db_vkinder'], kwargs['candidates'], kwargs['new_message']['user_id'])
+        return next_candidate(
+            kwargs['vk'], kwargs['db_vkinder'],
+            kwargs['candidates'],
+            kwargs['new_message']['user_id']
+        )
     elif kwargs['new_message']['text'] == menu_dict['021']['keyboard'][1]['text']:
         return {'menu_namber': '0', 'photo_list': []}
 
-#уроверь работы с сообщением с анкетой кандидата
+#уроверь работы с сообщением с анкетой кандидата (уровень 4)
 def node_0221(kwargs: dict):
     for kb in menu_dict['0221']['keyboard']:
         if kwargs['new_message']['text'] == kb['text']:
@@ -84,30 +89,14 @@ def node_0221(kwargs: dict):
             'reaction': reaction,
             'viewer_id': kwargs['new_message']['user_id'],
             'viewed_id': kwargs['candidate']['id']})
-        return next_candidate(kwargs['vk'], kwargs['db_vkinder'], kwargs['candidates'],
-                              kwargs['new_message']['user_id'])
+        return next_candidate(
+            kwargs['vk'],
+            kwargs['db_vkinder'],
+            kwargs['candidates'],
+            kwargs['new_message']['user_id']
+        )
     else:
         return {'menu_namber': '0', 'photo_list': []}
-
-def set_like(kwargs: dict):
-    attachment = kwargs['db_vkinder'].get_user_photos(kwargs['new_message']['viewed_id'])
-    params ={
-        'attachment': attachment,
-        'message': kwargs['new_message']['text'],
-        'peer_id': kwargs['new_message']['peer_id'],
-        'conversation_message_id': kwargs['new_message']['conversation_message_id'],
-        'keyboard': kwargs['new_message']['keyboard']
-    }
-    photo_id = kwargs['db_vkinder'].like_user_photo(
-        kwargs['new_message']['viewed_id'],
-        kwargs['new_message']['photo_like']
-    )
-    kwargs['vk'].like(
-        kwargs['new_message']['user_id'],
-        kwargs['new_message']['viewed_id'],
-        photo_id
-    )
-    kwargs['vk'].edit_message(params)
 
 menu_dict = {
     '0': {'func': node_0,

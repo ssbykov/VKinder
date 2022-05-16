@@ -1,6 +1,6 @@
 from vk_class import VKclass
 from DBVkinder import VkinderDB
-from bot_menu import menu_dict, set_like
+from bot_menu import menu_dict#, set_like
 
 if __name__ == '__main__':
     res_dict = {'menu_namber': '0', 'candidates': None, 'photo_list': []}
@@ -30,9 +30,15 @@ if __name__ == '__main__':
                     res_dict['photo_list']
                 )
             else:
-                arg_dict['vk'].answer(arg_dict['user_id'], 'Сорян, такой коммнды я не знаю. :(\nВыбери из предложенного.')
+                arg_dict['vk'].answer(arg_dict['new_message']['user_id'], 'Сорян, такой коммнды я не знаю. :(\nВыбери из предложенного.')
         elif arg_dict['new_message']['type'] == 'MESSAGE_EVENT':
-            edit_message_params = set_like(arg_dict)
+            arg_dict['vk'].edit_message(
+                arg_dict['new_message']['user_id'],
+                menu_dict[res_dict['menu_namber']]['message'],
+                menu_dict['0221']['keyboard'],
+                arg_dict['new_message']['photo_list'],
+                arg_dict['new_message']['conversation_message_id']
+            )
 
 
 

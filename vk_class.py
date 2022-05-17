@@ -28,7 +28,7 @@ class VKclass:
                 if event.object['payload']['type'] == 'like':
                     return {
                         'user_id': event.object['user_id'],
-                        'text': 'Список "Вах"!',
+                        'text': 'Список Лайк!',
                         'type': 'LIKE_LIST',
                     }
                 if event.object['payload']['type'] == 'new':

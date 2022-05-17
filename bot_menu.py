@@ -24,7 +24,7 @@ def next_candidate(vk, db_vkinder, candidates, user_id, node_num = '41'):
         try:
             candidate = candidates.__next__()
         except StopIteration:
-            # дописать логику!!!
+            return {'menu_namber': '1', 'photo_list': []}
             pass
         photo_list = vk.get_user_photos(candidate['id'])
         if photo_list:

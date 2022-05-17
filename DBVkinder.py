@@ -20,6 +20,7 @@ class Photo(Base):
 
     id = sq.Column(sq.Integer, primary_key=True)
     likes = sq.Column(sq.Integer)
+    url_photo = sq.Column(sq.String, nullable=False)
     like = sq.Column(sq.Boolean)
     user_id = sq.Column(sq.Integer, sq.ForeignKey('user.id', ondelete='CASCADE'))
 
@@ -85,8 +86,7 @@ class VkinderDB:
 
     # запрос данных по просмотренным кандидатам из базы
     def check_user_list(self, user_id):
-        query_user_list = self.session.query(UserView.viewed_id).filter(UserView.viewer_id == user_id,
-                                                                        UserView.reaction != 1)
+        query_user_list = self.session.query(UserView.viewed_id).filter(UserView.viewer_id == user_id)
         user_list = [ul[0] for ul in query_user_list]
         return user_list
 
@@ -95,6 +95,7 @@ class VkinderDB:
         query_user = list(self.session.query(UserView.viewer_id).filter(UserView.viewer_id == user_id).distinct())
         return query_user
 
+    #отбор списка избранных
     def select_like_list(self, user_id):
         query_like_list = self.session.query(UserView.viewed_id).filter(UserView.viewer_id == user_id,
                                                                         UserView.reaction == 2)

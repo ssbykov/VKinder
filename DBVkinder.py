@@ -97,16 +97,7 @@ class VkinderDB:
 
     def select_like_list(self, user_id):
         query_like_list = self.session.query(UserView.viewed_id).filter(UserView.viewer_id == user_id,
-                                                                        UserView.reaction != 2)
-        user_list = [ul[0] for ul in query_like_list]
-        return query_like_list.join(",")
+                                                                        UserView.reaction == 2)
+        user_list = [str(ul[0]) for ul in query_like_list]
+        return ','.join(user_list)
 
-
-
-    # # запрос фото пользователя
-    # def get_user_photos(self, user_id):
-    #     query_user = list(self.session.query(Photo.id).filter(Photo.user_id == user_id).order_by(Photo.likes.desc()))
-    #     attachment = ''
-    #     for photo in query_user:
-    #         attachment += f"photo{user_id}_{photo['id']},"
-    #     return attachment

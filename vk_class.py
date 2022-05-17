@@ -14,7 +14,7 @@ class VKclass:
         self.vk_user = vk_api.VkApi(token=self.token)
         self.longpoll = VkBotLongPoll(self.vk, group_id=213108918)
 
-#метод обработки нового сообщения от пользователя
+    #метод обработки нового сообщения от пользователя
     def new_message(self):
         for event in self.longpoll.listen():
             if event.type == VkBotEventType.MESSAGE_NEW and event.obj.message['text'] != '':
@@ -25,7 +25,19 @@ class VKclass:
                     'type': 'MESSAGE_NEW'
                 }
             elif event.type == VkBotEventType.MESSAGE_EVENT:
-                if event.object['payload']['type']:
+                if event.object['payload']['type'] == 'like':
+                    return {
+                        'user_id': event.object['user_id'],
+                        'text': 'Список "Вах"!',
+                        'type': 'LIKE_LIST',
+                    }
+                if event.object['payload']['type'] == 'new':
+                    return {
+                        'user_id': event.object['user_id'],
+                        'text': 'Новые',
+                        'type': 'NEW_LIST',
+                    }
+                else :
                     params = {
                         'peer_id': event.object['peer_id'],
                         'user_id': event.object['user_id'],
@@ -33,21 +45,24 @@ class VKclass:
                     }
                     response = self.vk.method('messages.getByConversationMessageId', params)['items'][0]
                     photo_like = event.object['payload']['type']
+                    photo_like_key = list(photo_like.keys())[0]
                     owner_id = response['text'].replace('https://vk.com/id', '').split(',')[0]
-                    if list(photo_like.keys())[0] == 'like':
-                        photo_list = self.photo_like(event.object['user_id'], owner_id, photo_like['like'])
+                    if photo_like_key == 'like':
+                        keyboard_type = '41'
+                    else:
+                        keyboard_type = '42'
+                    photo_list = self.photo_like(event.object['user_id'], owner_id, photo_like[photo_like_key])
                     return {
                         'viewed_id': owner_id,
                         'text': response['text'],
                         'conversation_message_id': event.object['conversation_message_id'],
                         'user_id': event.object['user_id'],
-                        'type': 'MESSAGE_EVENT',
+                        'type': 'LIKE',
+                        'keyboard_type': keyboard_type,
                         'photo_list': photo_list,
                     }
-                else:
-                    pass
 
-    #ищменение сообщения с анкетой
+    #изменение сообщения с анкетой
     def edit_message(self, user_id: int, message: str, keyboard, photo_list, conversation_message_id):
         edit_params = {
             'peer_id': user_id,
@@ -84,24 +99,30 @@ class VKclass:
     def _keyboard(self, keyboard_list: list, photo_list):
         keyboard = VkKeyboard(inline=True)
         for button in keyboard_list:
-            if button['text']:
-                keyboard.add_button(button['text'], button['color'])
-        if len(photo_list):
-            keyboard.add_line()
-            for bn in range(len(photo_list)):
-                if photo_list[bn]['like']:
-                    keyboard.add_callback_button(
-                        f'Фото {bn + 1}',
-                        VkKeyboardColor.NEGATIVE,
-                        payload={"type": {'like': str(photo_list[bn]['id'])}}
-                    )
+            if 'text' in list(button.keys()):
+                if button['text']:
+                    keyboard.add_button(button['text'], button['color'])
                 else:
-                    keyboard.add_callback_button(
-                        f'Фото {bn + 1}',
-                        VkKeyboardColor.SECONDARY,
-                        payload={"type": {'like': str(photo_list[bn]['id'])}}
-                    )
-            keyboard.add_callback_button('Список "Вах!"', VkKeyboardColor.POSITIVE, payload={"type": 'like'})
+                    keyboard.add_line()
+            else:
+                if keyboard_list[-1]['label'] == 'Новые':
+                    type_key = 'like_like'
+                else:
+                    type_key = 'like'
+                for bn in range(len(photo_list)):
+                    if photo_list[bn]['like']:
+                        keyboard.add_callback_button(
+                            f'Фото {bn + 1}',
+                            VkKeyboardColor.NEGATIVE,
+                            payload={'type': {type_key: str(photo_list[bn]['id'])}}
+                        )
+                    else:
+                        keyboard.add_callback_button(
+                            f'Фото {bn + 1}',
+                            VkKeyboardColor.SECONDARY,
+                            payload={'type': {type_key: str(photo_list[bn]['id'])}}
+                        )
+                keyboard.add_callback_button(button['label'], button['color'], payload=button['payload'])
         return keyboard
 
     #метод запроса фотографий по кандидату из соцсети
@@ -170,7 +191,8 @@ class VKclass:
             self.vk_user.method('likes.delete', params)
         return self.get_user_photos(owner_id)
 
-
+    #получение списка избранных
     def get_like_list(self, like_list):
-        check_like = self.vk_user.method('users.get', like_list)
+        params = {'user_ids': like_list}
+        check_like = self.vk.method('users.get', params)
         return list(check_like)

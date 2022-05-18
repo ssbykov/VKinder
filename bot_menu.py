@@ -11,9 +11,9 @@ def init_candidates(kwargs: dict):
     kwargs['vk'].answer(user_id, 'Подожди пока подберу для тебе кандидатов ;)')
     candidates = kwargs['vk'].pair_search(user_information_dict)
     if check_list:
-        candidates = iter(list(filter(lambda x: x['id'] not in check_list, candidates)))
-    else:
-        candidates = iter(candidates)
+        candidates = list(filter(lambda x: x['id'] not in check_list, candidates))
+    kwargs['vk'].answer(user_id, f'По твоим параметрам подобрано {len(candidates)} анкет!')
+    candidates = iter(candidates)
     return {'menu_namber': '31', 'candidates': candidates, 'photo_list': []}
 
 
@@ -84,6 +84,7 @@ def node_31(kwargs: dict):
     elif kwargs['new_message']['text'] == menu_dict['31']['keyboard'][1]['text']:
         return {'menu_namber': '1', 'photo_list': []}
 
+#обработка действия (уровень 3) запуск показа избранных анкет
 def node_32(kwargs):
     user_id = kwargs['new_message']['user_id']
     like_list = kwargs['db_vkinder'].select_like_list(user_id)
@@ -95,8 +96,6 @@ def node_32(kwargs):
         user_id,
         '42'
     )
-    # return {'like_candidates': like_candidates, 'photo_list': []}
-
 
 #уроверь работы с сообщением с анкетой кандидата (уровень 4)
 def node_41(kwargs: dict):
@@ -150,6 +149,10 @@ menu_dict = {
             'keyboard': [{'text': 'ДААА!', 'color': VkKeyboardColor.POSITIVE},
                          {'text': 'Не, передумал.', 'color': VkKeyboardColor.NEGATIVE}],
             'buttons':['ДААА!', 'Не, передумал.']},
+    '32': {'func': node_32,
+           'message': '',
+           'keyboard': [],
+           'buttons':['Список Лайк!']},
     '41': {'func': node_41,
              'keyboard': [{'text': 'Ну не знаю...', 'color': VkKeyboardColor.PRIMARY, 'reaction': 1},
                           {'text': 'Лайк!', 'color': VkKeyboardColor.POSITIVE, 'reaction': 2},
@@ -158,10 +161,6 @@ menu_dict = {
                           {'text': ''},
                           {'label': 'Список Лайк!"', 'color': VkKeyboardColor.POSITIVE, 'payload': {'type': 'like'}}],
             'buttons':['Ну не знаю...', 'Лайк!', 'Точно нет!', 'Достаточно']},
-    '32': {'func': node_32,
-           'message': '',
-           'keyboard': [],
-           'buttons':['Список Лайк!']},
     '42': {'func': node_42,
              'keyboard': [{'text': 'Дальше', 'color': VkKeyboardColor.PRIMARY, 'reaction': 1},
                           {'text': 'Достаточно', 'color': VkKeyboardColor.PRIMARY, 'reaction': 0},

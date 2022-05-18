@@ -5,7 +5,7 @@ import sys
 
 if __name__ == '__main__':
     res_dict = {'menu_namber': '1', 'candidates': None, 'photo_list': []}
-    arg_dict = {'new_message': None, 'candidates': iter([])}
+    arg_dict = {'new_message': {'text': ''}, 'candidates': iter([])}
     f = open('pass_vkinder.txt', 'r')
     token, token_group, group_id, db_pass = [x.strip() for x in f.readlines()]
     try:
@@ -17,7 +17,7 @@ if __name__ == '__main__':
     arg_dict['db_vkinder'].create_database()
     arg_dict['db_vkinder'].create_database_tables()
     user_id = ''
-    while arg_dict['new_message'] != 'q':
+    while arg_dict['new_message']['text'] != 'q':
         arg_dict['new_message'] = arg_dict['vk'].new_message()
         if arg_dict['new_message']['type'] in ['MESSAGE_NEW', 'LIKE_LIST', 'NEW_LIST']:
             if arg_dict['new_message']['type'] == 'NEW_LIST':

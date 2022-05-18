@@ -1,3 +1,4 @@
+import sys
 import vk_api
 import time
 from datetime import date
@@ -7,12 +8,12 @@ from vk_api.keyboard import VkKeyboard, VkKeyboardColor
 
 class VKclass:
     URL = 'https://api.vk.com/method/'
-    def __init__(self, token, token_group):
+    def __init__(self, token, token_group, group_id):
         self.token = token
         self.token_group = token_group
         self.vk = vk_api.VkApi(token=self.token_group)
         self.vk_user = vk_api.VkApi(token=self.token)
-        self.longpoll = VkBotLongPoll(self.vk, group_id=213108918)
+        self.longpoll = VkBotLongPoll(self.vk, group_id=group_id)
 
     #метод обработки нового сообщения от пользователя
     def new_message(self):
@@ -43,7 +44,7 @@ class VKclass:
                         'user_id': event.object['user_id'],
                         'conversation_message_ids': event.object['conversation_message_id']
                     }
-                    response = self.vk.method('messages.getByConversationMessageId', params)['items'][0]
+                    response = self._response_vk(self.vk, 'messages.getByConversationMessageId', params)['items'][0]
                     photo_like = event.object['payload']['type']
                     photo_like_key = list(photo_like.keys())[0]
                     owner_id = response['text'].replace('https://vk.com/id', '').split(',')[0]
@@ -51,15 +52,14 @@ class VKclass:
                         keyboard_type = '41'
                     else:
                         keyboard_type = '42'
-                    photo_list = self.photo_like(event.object['user_id'], owner_id, photo_like[photo_like_key])
                     return {
-                        'viewed_id': owner_id,
+                        'owner_id': owner_id,
                         'text': response['text'],
                         'conversation_message_id': event.object['conversation_message_id'],
                         'user_id': event.object['user_id'],
                         'type': 'LIKE',
                         'keyboard_type': keyboard_type,
-                        'photo_list': photo_list,
+                        'photo_like': photo_like[photo_like_key],
                     }
 
     #изменение сообщения с анкетой
@@ -70,7 +70,7 @@ class VKclass:
             'conversation_message_id': conversation_message_id
         }
         params = edit_params | self.get_params(keyboard, photo_list)
-        self.vk.method('messages.edit', params)
+        self._response_vk(self.vk, 'messages.edit', params)
 
     #формирования ссобщения пользователю
     def answer(self, user_id: int, message: str, keyboard=[], photo_list=[]):
@@ -80,7 +80,7 @@ class VKclass:
             'random_id': 0
         }
         params = answer_params | self.get_params(keyboard, photo_list)
-        self.vk.method('messages.send', params)
+        self._response_vk(self.vk, 'messages.send', params)
 
     #формирование параметров клавиатуры и фото для передачи сообщения с анкетой
     def get_params(self, keyboard: list, photo_list: list):
@@ -128,7 +128,7 @@ class VKclass:
     #метод запроса фотографий по кандидату из соцсети
     def get_user_photos(self, user_id: int):
         params = {'owner_id': user_id, 'album_id': 'profile', 'extended': 1}
-        user_photos = self.vk_user.method('photos.get', params)
+        user_photos = self._response_vk(self.vk_user, 'photos.get', params)
         if len(user_photos['items']):
             photo_list = [{
                 'id': photo['id'],
@@ -143,7 +143,7 @@ class VKclass:
     #запрос информации по ползователю из соцсети для получения параметров для формирования списка кандидатов
     def user_information(self, user_id: int):
         params = {'user_ids': user_id, 'fields': 'bdate,sex,city'}
-        user_inf = self.vk.method('users.get', params)
+        user_inf = self._response_vk(self.vk, 'users.get', params)
         user_year = int(user_inf[0]['bdate'][-4:])
         age = int(date.today().year) - user_year
         if user_inf[0]['sex'] == 2:
@@ -165,7 +165,7 @@ class VKclass:
     def pair_search(self, params: dict, offset='0'):
         candidates = []
         for birth_year in range(params['birth_year'] + 4, params['birth_year'] - 4, -1):
-            add_candidates = self.vk_user.method('users.search', {
+            add_candidates = self._response_vk(self.vk_user, 'users.search', {
                 'offset': offset,
                 'count': '1000',
                 'fields': ['photo', 'has_photo'],
@@ -185,15 +185,26 @@ class VKclass:
     #добавление/удаление лайка к фото
     def photo_like(self, user_id, owner_id, photo_id):
         params = {'type': 'photo', 'user_id': user_id, 'owner_id': owner_id, 'item_id': photo_id}
-        check_like = self.vk_user.method('likes.isLiked', params)
+        check_like = self._response_vk(self.vk_user, 'likes.isLiked', params)
         if not check_like['liked']:
-            self.vk_user.method('likes.add', params)
+            self._response_vk(self.vk_user, 'likes.add', params)
+            like_flag = True
         else:
-            self.vk_user.method('likes.delete', params)
-        return self.get_user_photos(owner_id)
+            self._response_vk(self.vk_user, 'likes.delete', params)
+            like_flag = False
+        return [like_flag, self.get_user_photos(owner_id)]
 
     #получение списка избранных
     def get_like_list(self, like_list):
         params = {'user_ids': like_list}
-        check_like = self.vk.method('users.get', params)
+        check_like = self._response_vk(self.vk,'users.get', params)
         return list(check_like)
+
+    #обработка запроса
+    def _response_vk(self, api, method_name, params):
+        try:
+            response = api.method(method_name, params)
+        except Exception as e:
+            print(e)
+            sys.exit()
+        return response

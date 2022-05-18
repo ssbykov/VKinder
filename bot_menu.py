@@ -3,7 +3,7 @@ from vk_api.keyboard import VkKeyboard, VkKeyboardColor
 
 
 # формирование первоначального полного списка кандидатов с учетом уже просмотренных
-def init_candidates(kwargs):
+def init_candidates(kwargs: dict):
     user_id = kwargs['new_message']['user_id']
     user_information_dict = kwargs['vk'].user_information(user_id)
     check_list = kwargs['db_vkinder'].check_user_list(user_id)

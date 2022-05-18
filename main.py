@@ -1,16 +1,18 @@
 from vk_class import VKclass
 from DBVkinder import VkinderDB
-from bot_menu import menu_dict#, set_like
+from bot_menu import menu_dict
+import sys
 
 if __name__ == '__main__':
     res_dict = {'menu_namber': '1', 'candidates': None, 'photo_list': []}
     arg_dict = {'new_message': None, 'candidates': iter([])}
-    f = open('token_vk.txt', 'r')
-    token = f.readline().strip()
-    token_group = f.readline().strip()
-    arg_dict['vk'] = VKclass(token, token_group)
-    f = open('db_pass.txt', 'r')
-    db_pass = f.readline().strip()
+    f = open('pass_vkinder.txt', 'r')
+    token, token_group, group_id, db_pass = [x.split('=')[1].strip() for x in f.readlines()]
+    try:
+        arg_dict['vk'] = VKclass(token, token_group, group_id)
+    except Exception as e:
+        print(e)
+        sys.exit()
     arg_dict['db_vkinder'] = VkinderDB('postgres', db_pass, 'vkinder')
     arg_dict['db_vkinder'].create_database()
     arg_dict['db_vkinder'].create_database_tables()
@@ -37,11 +39,16 @@ if __name__ == '__main__':
                 arg_dict['vk'].answer(arg_dict['new_message']['user_id'],
                                       'Сорян, такой коммнды я не знаю. :(\nЛучше выбери из предложенного.')
         elif arg_dict['new_message']['type'] == 'LIKE':
+            like_flag, photo_list = arg_dict['vk'].photo_like(
+                arg_dict['new_message']['user_id'],
+                arg_dict['new_message']['owner_id'],
+                arg_dict['new_message']['photo_like'])
+            arg_dict['db_vkinder'].update_user_photo(arg_dict['new_message']['photo_like'], like_flag)
             arg_dict['vk'].edit_message(
                 arg_dict['new_message']['user_id'],
                 arg_dict['new_message']['text'],
                 menu_dict[arg_dict['new_message']['keyboard_type']]['keyboard'],
-                arg_dict['new_message']['photo_list'],
+                photo_list,
                 arg_dict['new_message']['conversation_message_id']
             )
 

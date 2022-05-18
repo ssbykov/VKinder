@@ -72,6 +72,12 @@ class VkinderDB:
             self.session.execute(insert(Photo).values(photo).on_conflict_do_nothing())
         self.session.commit()
 
+    # обновление фотографии в базе
+    def update_user_photo(self, photo_id, like_flag):
+        photo = self.session.query(Photo).get(photo_id)
+        photo.like = like_flag
+        self.session.commit()
+
     # добавление данных по просмотру анкеты
     def add_user_viewer(self, data_dict):
         self.session.execute(insert(UserView).values(data_dict).on_conflict_do_nothing())

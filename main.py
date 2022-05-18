@@ -7,7 +7,7 @@ if __name__ == '__main__':
     res_dict = {'menu_namber': '1', 'candidates': None, 'photo_list': []}
     arg_dict = {'new_message': None, 'candidates': iter([])}
     f = open('pass_vkinder.txt', 'r')
-    token, token_group, group_id, db_pass = [x.split('=')[1].strip() for x in f.readlines()]
+    token, token_group, group_id, db_pass = [x.strip() for x in f.readlines()]
     try:
         arg_dict['vk'] = VKclass(token, token_group, group_id)
     except Exception as e:

@@ -2,12 +2,19 @@ from vk_class import VKclass
 from DBVkinder import VkinderDB
 from bot_menu import menu_dict
 import sys
+import os
+from dotenv import load_dotenv
 
 if __name__ == '__main__':
     res_dict = {'menu_namber': '1', 'candidates': None, 'photo_list': []}
     arg_dict = {'new_message': {'text': ''}, 'candidates': iter([])}
-    f = open('pass_vkinder.txt', 'r')
-    token, token_group, group_id, db_pass = [x.strip() for x in f.readlines()]
+    dotenv_path = os.path.join(os.path.dirname(__file__), '.env')
+    if os.path.exists(dotenv_path):
+        load_dotenv(dotenv_path)
+    token = os.environ.get("TOKEN")
+    token_group = os.environ.get("TOKEN_GROUP")
+    group_id = os.environ.get("GROUP_ID")
+    db_pass = os.environ.get("DB_PASS")
     try:
         arg_dict['vk'] = VKclass(token, token_group, group_id)
     except Exception as e:
@@ -24,7 +31,7 @@ if __name__ == '__main__':
                 res_dict['menu_namber'] = '22'
             elif arg_dict['new_message']['type'] == 'LIKE_LIST':
                 res_dict['menu_namber'] = '32'
-            if res_dict['menu_namber'] == '1'\
+            if res_dict['menu_namber'] == '1' \
                     or arg_dict['new_message']['text'] in menu_dict[res_dict['menu_namber']]['buttons']:
                 res_dict = menu_dict[res_dict['menu_namber']]['func'](arg_dict)
                 for key in (set(res_dict) & {'candidates', 'candidate', 'photo_list'}):
@@ -51,7 +58,3 @@ if __name__ == '__main__':
                 photo_list,
                 arg_dict['new_message']['conversation_message_id']
             )
-
-
-
-
